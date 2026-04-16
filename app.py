@@ -48,11 +48,11 @@ def count_fillers(text):
     return sum(word in filler_words for word in words)
 
 
-# 🔥 FINAL SPEED FIX (NO TIME REQUIRED)
+# 🔥 FINAL SPEED FIX
 def calculate_wpm(text):
     words = len(text.split())
 
-    wpm = words * 3  # simple approximation
+    wpm = words * 3
 
     if wpm < 60:
         return 60
@@ -65,7 +65,7 @@ def calculate_wpm(text):
 def analyze_speech(text):
     fillers = count_fillers(text)
     wpm = calculate_wpm(text)
-    pauses = text.count("...")  # simple pause detection
+    pauses = text.count("...")
     return fillers, wpm, pauses
 
 
@@ -100,7 +100,6 @@ def generate_ai_feedback(acc, fillers, wpm, pauses):
 
 
 # ---------- ROUTES ----------
-
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -109,45 +108,6 @@ def home():
 @app.route('/signup')
 def signup():
     return render_template('signup.html')
-
-
-@app.route('/register', methods=['POST'])
-def register():
-    username = request.form['username']
-    password = request.form['password']
-
-    conn = sqlite3.connect("users.db")
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM users WHERE username=?", (username,))
-    if cur.fetchone():
-        conn.close()
-        return render_template('signup.html', error="User already exists")
-
-    cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-    conn.commit()
-    conn.close()
-
-    return redirect('/')
-
-
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.form['username']
-    password = request.form['password']
-
-    conn = sqlite3.connect("users.db")
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-    user = cur.fetchone()
-
-    conn.close()
-
-    if user:
-        return redirect('/dashboard')
-    else:
-        return render_template('index.html', error="Invalid Credentials")
 
 
 @app.route('/dashboard')
@@ -162,7 +122,6 @@ def upload():
     return redirect('/dashboard')
 
 
-# ---------- ANALYZE ----------
 @app.route('/analyze', methods=['POST'])
 def analyze():
     spoken_text = request.form['text']
@@ -188,7 +147,6 @@ def analyze():
     )
 
 
-# ---------- RUN ----------
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
