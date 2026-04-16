@@ -86,6 +86,12 @@ def login():
     if request.method == 'POST':
         return redirect('/dashboard')
     return render_template('index.html')
+# ---------- SIGNUP ----------
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        return redirect('/dashboard')
+    return render_template('signup.html')
 
 
 @app.route('/dashboard')
