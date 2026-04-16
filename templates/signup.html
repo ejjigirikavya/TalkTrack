@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Signup</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+}
+.card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    padding: 30px;
+    border-radius: 15px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.5);
+}
+input {
+    width: 90%;
+    padding: 12px;
+    margin: 10px;
+    border-radius: 8px;
+    border: none;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    background: #38bdf8;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover { background:#0ea5e9; }
+a { color:#38bdf8; text-decoration:none; }
+</style>
+</head>
+
+<body>
+<div class="card">
+<h2>📝 Sign Up</h2>
+
+{% if error %}
+<p style="color:red;">{{ error }}</p>
+{% endif %}
+
+<form action="/register" method="POST">
+
+    <input type="text" name="username" placeholder="Enter Username" required>
+
+    <input type="password" name="password" placeholder="Enter Password" required>
+
+    <button type="submit">Create Account</button>
+
+</form>
+
+<p><a href="/">Back to Login</a></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+    text-align: center;
+}
+
+header {
+    background: #020617;
+    padding: 15px;
+    font-size: 20px;
+}
+
+.container {
+    margin-top: 40px;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    padding: 25px;
+    border-radius: 15px;
+    width: 400px;
+    margin: auto;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #38bdf8;
+    cursor: pointer;
+}
+
+button:hover {
+    background:#0ea5e9;
+}
+
+.stop-btn {
+    background: #ef4444;
+}
+
+.stop-btn:hover {
+    background: #dc2626;
+}
+
+input {
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.result {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.error {
+    color: red;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<header>🎤 TalkTrack Dashboard</header>
+
+<div class="container">
+<div class="card">
+
+<!-- ✅ Upload PPT -->
+<form action="/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="ppt" required>
+    <button>Upload PPT</button>
+</form>
+
+<!-- ✅ Start Button -->
+<form action="/start" method="POST">
+    <button>▶ Start Presentation</button>
+</form>
+
+<!-- ✅ Stop Button -->
+<button class="stop-btn" onclick="stopRecording()">⏹ Stop</button>
+
+<!-- ✅ Error Message -->
+{% if error %}
+<p class="error">{{ error }}</p>
+{% endif %}
+
+<!-- ✅ Results Section -->
+{% if done %}
+<div class="result">
+<hr>
+<h3>📊 Results</h3>
+
+<p><b>Spoken:</b> {{ spoken_text }}</p>
+<p>Accuracy: {{ accuracy }}%</p>
+<p>Fillers: {{ fillers }}</p>
+<p>Speed: {{ wpm }} WPM</p>
+<p>Pauses: {{ pauses }}</p>
+
+<h3>🧠 AI Feedback</h3>
+<ul>
+{% for f in feedback %}
+<li>{{ f }}</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+</div>
+</div>
+
+<!-- ✅ Stop Script -->
+<script>
+function stopRecording() {
+    fetch('/stop', { method: 'POST' })
+    .then(() => {
+        alert("⏹ Recording stopped! Please wait for results...");
+    });
+}
+</script>
+
+</body>
+</html>
