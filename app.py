@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect
 import sqlite3
 from pptx import Presentation
 import difflib
+import time
 
 app = Flask(__name__)
 
@@ -21,6 +22,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 # ---------- PPT TEXT ----------
 def extract_ppt_text(file):
     prs = Presentation(file)
@@ -33,6 +35,7 @@ def extract_ppt_text(file):
 
     return text
 
+
 # ---------- ANALYSIS ----------
 filler_words = ["um", "uh", "like", "you know", "basically", "and", "that"]
 
@@ -44,10 +47,10 @@ def count_fillers(text):
     words = text.lower().split()
     return sum(word in filler_words for word in words)
 
-def analyze_speech(text):
+def analyze_speech(text, duration):
     words = text.split()
-    wpm = len(words) / 1  # assume 1 minute
-    pauses = max(0, int(len(words) * 0.1))
+    wpm = len(words) / (duration / 60) if duration > 0 else 0
+    pauses = max(0, int(duration - (len(words) * 0.5)))
     fillers = count_fillers(text)
     return fillers, wpm, pauses
 
@@ -80,18 +83,65 @@ def generate_ai_feedback(acc, fillers, wpm, pauses):
 
     return feedback
 
+
 # ---------- ROUTES ----------
+
 @app.route('/')
 def home():
     return render_template('index.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = sqlite3.connect("users.db")
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+        user = cur.fetchone()
+
+        conn.close()
+
+        if user:
+            return redirect('/dashboard')
+        else:
+            return render_template('index.html', error="Invalid Credentials")
+
+    return render_template('index.html')
+
 
 @app.route('/signup')
 def signup():
     return render_template('signup.html')
 
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.form['username']
+    password = request.form['password']
+
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM users WHERE username=?", (username,))
+    if cur.fetchone():
+        conn.close()
+        return render_template('signup.html', error="User already exists")
+
+    cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+    conn.commit()
+    conn.close()
+
+    return redirect('/')
+
+
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
+
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -99,18 +149,23 @@ def upload():
     file.save("uploaded.pptx")
     return redirect('/dashboard')
 
-# 🔥 MAIN ANALYSIS ROUTE
+
+# ---------- MAIN ANALYSIS ----------
 @app.route('/analyze', methods=['POST'])
 def analyze():
     spoken_text = request.form['text']
 
-    ppt_text = extract_ppt_text("uploaded.pptx")
-
     if len(spoken_text.strip()) == 0:
         return render_template('dashboard.html', error="No speech detected!", done=False)
 
+    start_time = time.time()
+
+    ppt_text = extract_ppt_text("uploaded.pptx")
+
+    duration = time.time() - start_time
+
     accuracy = calculate_accuracy(ppt_text, spoken_text)
-    fillers, wpm, pauses = analyze_speech(spoken_text)
+    fillers, wpm, pauses = analyze_speech(spoken_text, duration)
     feedback = generate_ai_feedback(accuracy, fillers, wpm, pauses)
 
     return render_template(
@@ -123,6 +178,7 @@ def analyze():
         spoken_text=spoken_text,
         done=True
     )
+
 
 # ---------- RUN ----------
 if __name__ == '__main__':
