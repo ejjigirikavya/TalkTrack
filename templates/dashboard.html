@@ -2,7 +2,6 @@
 <html>
 <head>
 <title>Dashboard</title>
-
 <style>
 body {
     margin: 0;
@@ -11,26 +10,21 @@ body {
     color: white;
     text-align: center;
 }
-
 header {
     background: #020617;
     padding: 15px;
     font-size: 20px;
 }
-
 .container {
     margin-top: 40px;
 }
-
 .card {
     background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
     padding: 25px;
     border-radius: 15px;
     width: 400px;
     margin: auto;
 }
-
 button {
     padding: 10px 20px;
     margin: 10px;
@@ -39,30 +33,18 @@ button {
     background: #38bdf8;
     cursor: pointer;
 }
-
-button:hover {
-    background:#0ea5e9;
-}
-
 .stop-btn {
-    background: #ef4444;
+    background: red;
 }
-
 textarea {
     width: 90%;
     height: 80px;
     margin-top: 10px;
     border-radius: 8px;
-    padding: 10px;
 }
-
 .result {
     margin-top: 20px;
     text-align: left;
-}
-
-.error {
-    color: red;
 }
 </style>
 </head>
@@ -74,40 +56,25 @@ textarea {
 <div class="container">
 <div class="card">
 
-<!-- Upload PPT -->
 <form action="/upload" method="POST" enctype="multipart/form-data">
     <input type="file" name="ppt" required>
-    <br><br>
     <button>Upload PPT</button>
 </form>
 
-<!-- Speech Text -->
-<textarea id="speechText" name="text" placeholder="Your speech will appear here..."></textarea>
+<textarea id="speechText" placeholder="Speech will appear here..."></textarea>
 
-<br>
-
-<!-- Start Button -->
-<button onclick="startSpeech()">▶ Start Presentation</button>
-
-<!-- Stop Button -->
+<button onclick="startSpeech()">▶ Start</button>
 <button class="stop-btn" onclick="stopSpeech()">⏹ Stop</button>
 
-<!-- Analyze -->
 <form action="/analyze" method="POST">
     <input type="hidden" name="text" id="hiddenText">
     <button type="submit">Analyze</button>
 </form>
 
-<!-- Error -->
-{% if error %}
-<p class="error">{{ error }}</p>
-{% endif %}
-
-<!-- Results -->
 {% if done %}
 <div class="result">
 <hr>
-<h3>📊 Results</h3>
+<h3>Results</h3>
 
 <p><b>Spoken:</b> {{ spoken_text }}</p>
 <p>Accuracy: {{ accuracy }}%</p>
@@ -115,7 +82,7 @@ textarea {
 <p>Speed: {{ wpm }} WPM</p>
 <p>Pauses: {{ pauses }}</p>
 
-<h3>🧠 AI Feedback</h3>
+<h3>AI Feedback</h3>
 <ul>
 {% for f in feedback %}
 <li>{{ f }}</li>
@@ -146,14 +113,9 @@ function startSpeech() {
 }
 
 function stopSpeech() {
-    if (recognition) {
-        recognition.stop();
-    }
-
+    recognition.stop();
     document.getElementById("hiddenText").value =
         document.getElementById("speechText").value;
-
-    alert("Recording stopped! Now click Analyze.");
 }
 </script>
 

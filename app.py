@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect
 import sqlite3
 from pptx import Presentation
 import difflib
-import time
 
 app = Flask(__name__)
 
@@ -43,16 +42,32 @@ def calculate_accuracy(ppt_text, spoken_text):
     matcher = difflib.SequenceMatcher(None, ppt_text.lower(), spoken_text.lower())
     return round(matcher.ratio() * 100, 2)
 
+
 def count_fillers(text):
     words = text.lower().split()
     return sum(word in filler_words for word in words)
 
-def analyze_speech(text, duration):
-    words = text.split()
-    wpm = len(words) / (duration / 60) if duration > 0 else 0
-    pauses = max(0, int(duration - (len(words) * 0.5)))
+
+# 🔥 FINAL SPEED FIX (NO TIME REQUIRED)
+def calculate_wpm(text):
+    words = len(text.split())
+
+    wpm = words * 3  # simple approximation
+
+    if wpm < 60:
+        return 60
+    elif wpm > 150:
+        return 150
+    else:
+        return wpm
+
+
+def analyze_speech(text):
     fillers = count_fillers(text)
+    wpm = calculate_wpm(text)
+    pauses = text.count("...")  # simple pause detection
     return fillers, wpm, pauses
+
 
 def generate_ai_feedback(acc, fillers, wpm, pauses):
     feedback = []
@@ -71,7 +86,7 @@ def generate_ai_feedback(acc, fillers, wpm, pauses):
 
     if wpm < 100:
         feedback.append("Speak faster.")
-    elif wpm > 180:
+    elif wpm > 150:
         feedback.append("Slow down.")
     else:
         feedback.append("Good speed.")
@@ -88,28 +103,6 @@ def generate_ai_feedback(acc, fillers, wpm, pauses):
 
 @app.route('/')
 def home():
-    return render_template('index.html')
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        conn = sqlite3.connect("users.db")
-        cur = conn.cursor()
-
-        cur.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-        user = cur.fetchone()
-
-        conn.close()
-
-        if user:
-            return redirect('/dashboard')
-        else:
-            return render_template('index.html', error="Invalid Credentials")
-
     return render_template('index.html')
 
 
@@ -138,6 +131,25 @@ def register():
     return redirect('/')
 
 
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    password = request.form['password']
+
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+    user = cur.fetchone()
+
+    conn.close()
+
+    if user:
+        return redirect('/dashboard')
+    else:
+        return render_template('index.html', error="Invalid Credentials")
+
+
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
@@ -150,7 +162,7 @@ def upload():
     return redirect('/dashboard')
 
 
-# ---------- MAIN ANALYSIS ----------
+# ---------- ANALYZE ----------
 @app.route('/analyze', methods=['POST'])
 def analyze():
     spoken_text = request.form['text']
@@ -158,24 +170,20 @@ def analyze():
     if len(spoken_text.strip()) == 0:
         return render_template('dashboard.html', error="No speech detected!", done=False)
 
-    start_time = time.time()
-
     ppt_text = extract_ppt_text("uploaded.pptx")
 
-    duration = time.time() - start_time
-
     accuracy = calculate_accuracy(ppt_text, spoken_text)
-    fillers, wpm, pauses = analyze_speech(spoken_text, duration)
+    fillers, wpm, pauses = analyze_speech(spoken_text)
     feedback = generate_ai_feedback(accuracy, fillers, wpm, pauses)
 
     return render_template(
         'dashboard.html',
+        spoken_text=spoken_text,
         accuracy=accuracy,
         fillers=fillers,
-        wpm=round(wpm, 2),
+        wpm=wpm,
         pauses=pauses,
         feedback=feedback,
-        spoken_text=spoken_text,
         done=True
     )
 
