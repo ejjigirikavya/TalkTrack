@@ -12,22 +12,15 @@ body {
     text-align: center;
 }
 
-header {
-    background: #020617;
-    padding: 15px;
-    font-size: 20px;
-}
-
 .container {
     margin-top: 40px;
 }
 
 .card {
     background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
     padding: 25px;
     border-radius: 15px;
-    width: 400px;
+    width: 420px;
     margin: auto;
 }
 
@@ -40,20 +33,14 @@ button {
     cursor: pointer;
 }
 
-button:hover {
-    background:#0ea5e9;
-}
-
 .stop-btn {
     background: #ef4444;
 }
 
-.stop-btn:hover {
-    background: #dc2626;
-}
-
-input {
-    padding: 10px;
+textarea {
+    width: 100%;
+    height: 100px;
+    margin-top: 10px;
     border-radius: 8px;
 }
 
@@ -64,38 +51,34 @@ input {
 
 .error {
     color: red;
-    margin-top: 15px;
 }
 </style>
 </head>
 
 <body>
 
-<header>🎤 TalkTrack Dashboard</header>
-
 <div class="container">
 <div class="card">
 
-<!-- ✅ Upload PPT -->
+<h2>🎤 TalkTrack AI</h2>
+
 <form action="/upload" method="POST" enctype="multipart/form-data">
     <input type="file" name="ppt" required>
     <button>Upload PPT</button>
 </form>
 
-<!-- ✅ Start Button -->
-<form action="/start" method="POST">
-    <button>▶ Start Presentation</button>
+<button onclick="startSpeech()">▶ Start Presentation</button>
+<button class="stop-btn" onclick="stopSpeech()">⏹ Stop</button>
+
+<form action="/analyze" method="POST">
+    <textarea id="speechText" name="text" placeholder="Your speech will appear here..."></textarea>
+    <button>Analyze</button>
 </form>
 
-<!-- ✅ Stop Button -->
-<button class="stop-btn" onclick="stopRecording()">⏹ Stop</button>
-
-<!-- ✅ Error Message -->
 {% if error %}
 <p class="error">{{ error }}</p>
 {% endif %}
 
-<!-- ✅ Results Section -->
 {% if done %}
 <div class="result">
 <hr>
@@ -119,13 +102,38 @@ input {
 </div>
 </div>
 
-<!-- ✅ Stop Script -->
 <script>
-function stopRecording() {
-    fetch('/stop', { method: 'POST' })
-    .then(() => {
-        alert("⏹ Recording stopped! Please wait for results...");
-    });
+let recognition;
+let finalText = "";
+
+function startSpeech() {
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = function(event) {
+        let interimText = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            let transcript = event.results[i][0].transcript;
+
+            if (event.results[i].isFinal) {
+                finalText += transcript + " ";
+            } else {
+                interimText += transcript;
+            }
+        }
+
+        document.getElementById("speechText").value =
+            finalText + interimText;
+    };
+
+    recognition.start();
+}
+
+function stopSpeech() {
+    recognition.stop();
 }
 </script>
 
